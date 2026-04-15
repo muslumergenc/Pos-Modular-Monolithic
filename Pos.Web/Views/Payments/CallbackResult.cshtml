@@ -1,0 +1,94 @@
+@{
+    ViewData["Title"] = "Ödeme Sonucu";
+    var isSuccess  = (bool?)ViewData["Success"] == true;
+    var paymentId  = (Guid?)ViewData["PaymentId"];
+    var errorMsg   = ViewData["Error"]?.ToString();
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 text-center">
+
+        @if (isSuccess)
+        {
+            <div class="mb-4">
+                <div class="rounded-circle bg-success d-inline-flex align-items-center justify-content-center"
+                     style="width:100px;height:100px">
+                    <i class="bi bi-check-lg text-white" style="font-size:3.5rem"></i>
+                </div>
+            </div>
+            <h2 class="fw-bold text-success">Ödeme Başarılı!</h2>
+            <p class="text-muted lead">3D Secure doğrulamanız tamamlandı ve ödemeniz onaylandı.</p>
+
+            <div class="card border-success shadow mt-4 mb-4">
+                <div class="card-body py-4">
+                    <div class="row text-center">
+                        <div class="col">
+                            <div class="text-muted small">İşlem Referansı</div>
+                            <code class="fs-6" id="txnRef">@paymentId?.ToString()[..8].ToUpper()...</code>
+                        </div>
+                        <div class="col border-start">
+                            <div class="text-muted small">Durum</div>
+                            <span class="badge bg-success fs-6 mt-1">Onaylandı</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-center gap-3">
+                @if (paymentId.HasValue)
+                {
+                    <a asp-action="Details" asp-route-id="@paymentId" class="btn btn-success">
+                        <i class="bi bi-receipt me-1"></i>Ödeme Detayı
+                    </a>
+                }
+                <a asp-controller="Orders" asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-list-ul me-1"></i>Siparişlere Dön
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="mb-4">
+                <div class="rounded-circle bg-danger d-inline-flex align-items-center justify-content-center"
+                     style="width:100px;height:100px">
+                    <i class="bi bi-x-lg text-white" style="font-size:3.5rem"></i>
+                </div>
+            </div>
+            <h2 class="fw-bold text-danger">Ödeme Başarısız</h2>
+            <p class="text-muted lead">
+                3D Secure doğrulaması tamamlanamadı veya ödeme reddedildi.
+            </p>
+
+            <div class="card border-danger shadow mt-4 mb-4">
+                <div class="card-body py-3">
+                    @if (!string.IsNullOrEmpty(errorMsg))
+                    {
+                        <p class="mb-1 text-danger fw-semibold">
+                            <i class="bi bi-exclamation-triangle me-1"></i>@errorMsg
+                        </p>
+                    }
+                    <p class="mb-0 text-muted small">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Kart limitinizi, bilgilerinizi ve 3D Secure SMS kodunuzu kontrol ederek tekrar deneyebilirsiniz.
+                    </p>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-center gap-3">
+                @if (paymentId.HasValue)
+                {
+                    <a asp-action="GatewayPay"
+                       asp-route-orderId="@ViewData["OrderId"]"
+                       class="btn btn-primary">
+                        <i class="bi bi-arrow-repeat me-1"></i>Tekrar Dene
+                    </a>
+                }
+                <a asp-controller="Orders" asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-list-ul me-1"></i>Siparişlere Dön
+                </a>
+            </div>
+        }
+
+    </div>
+</div>
+

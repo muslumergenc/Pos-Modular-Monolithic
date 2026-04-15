@@ -1,0 +1,65 @@
+﻿@{
+    ViewData["Title"] = "POS Sistemi - Ana Sayfa";
+}
+
+<div class="container mt-4">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-5 fw-bold">
+                <i class="bi bi-cash-stack text-primary"></i> POS Ödeme Sistemi
+            </h1>
+            <p class="text-muted">Modüler Monolitik Mimari ile geliştirilmiş POS sistemi</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="card border-primary shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-box-seam fs-1 text-primary"></i>
+                    <h5 class="card-title mt-2">Ürün Kataloğu</h5>
+                    <p class="card-text text-muted small">Ürün ve kategori yönetimi</p>
+                    <a asp-controller="Products" asp-action="Index" class="btn btn-primary btn-sm">Git</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-people fs-1 text-success"></i>
+                    <h5 class="card-title mt-2">Müşteriler</h5>
+                    <p class="card-text text-muted small">Müşteri kayıt ve yönetimi</p>
+                    <a asp-controller="Customers" asp-action="Index" class="btn btn-success btn-sm">Git</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-cart-check fs-1 text-warning"></i>
+                    <h5 class="card-title mt-2">Siparişler</h5>
+                    <p class="card-text text-muted small">Sipariş oluşturma ve takip</p>
+                    <a asp-controller="Orders" asp-action="Index" class="btn btn-warning btn-sm">Git</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-danger shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-credit-card fs-1 text-danger"></i>
+                    <h5 class="card-title mt-2">Ödemeler</h5>
+                    <p class="card-text text-muted small">Ödeme işlemleri ve geçmiş</p>
+                    <a asp-controller="Payments" asp-action="Index" class="btn btn-danger btn-sm">Git</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

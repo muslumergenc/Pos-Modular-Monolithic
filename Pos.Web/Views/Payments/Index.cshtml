@@ -1,0 +1,33 @@
+@model List<Pos.Web.Models.PaymentViewModel>
+@{ ViewData["Title"] = "Ödemeler"; }
+
+<h2><i class="bi bi-credit-card me-2"></i>Ödeme Geçmişi</h2>
+
+@if (TempData["Success"] != null) { <div class="alert alert-success">@TempData["Success"]</div> }
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr><th>Sipariş</th><th>Tutar</th><th>Yöntem</th><th>Durum</th><th>Referans</th><th>Tarih</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td><a asp-controller="Orders" asp-action="Details" asp-route-id="@p.OrderId">@p.OrderId.ToString()[..8]...</a></td>
+                    <td><strong>@p.Amount.ToString("C2")</strong></td>
+                    <td>@p.MethodName</td>
+                    <td>
+                        @{
+                            var cls = p.Status switch { 1 => "bg-success", 2 => "bg-danger", 3 => "bg-warning text-dark", _ => "bg-secondary" };
+                        }
+                        <span class="badge @cls">@p.StatusName</span>
+                    </td>
+                    <td><code>@(p.TransactionReference ?? "-")</code></td>
+                    <td>@(p.ProcessedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+

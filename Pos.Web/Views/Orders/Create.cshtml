@@ -1,0 +1,88 @@
+@model Pos.Web.Models.CreateOrderViewModel
+@{ ViewData["Title"] = "Yeni Sipariş"; }
+
+<h2><i class="bi bi-cart-plus me-2"></i>Yeni Sipariş Oluştur</h2><hr />
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="Create" method="post" id="orderForm">
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+            <div class="mb-3">
+                <label asp-for="CustomerId" class="form-label">Müşteri</label>
+                <select asp-for="CustomerId" class="form-select"
+                        asp-items="@(new SelectList(ViewBag.Customers as List<Pos.Web.Models.CustomerViewModel>, "Id", "FullName"))">
+                    <option value="">-- Müşteri Seçin --</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Notes" class="form-label">Notlar</label>
+                <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+            </div>
+
+            <h5 class="mt-4">Sipariş Kalemleri</h5>
+            <div id="itemsContainer">
+                <div class="row g-2 mb-2 item-row">
+                    <div class="col-md-7">
+                        <select name="Items[0].ProductId" class="form-select"
+                                asp-items="@(new SelectList(ViewBag.Products as List<Pos.Web.Models.ProductViewModel>, "Id", "Name"))">
+                            <option value="">-- Ürün Seçin --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <input name="Items[0].Quantity" type="number" class="form-control" placeholder="Miktar" min="1" value="1" />
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-outline-danger w-100 remove-item">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" id="addItem" class="btn btn-outline-primary btn-sm mt-2">
+                <i class="bi bi-plus-circle me-1"></i>Kalem Ekle
+            </button>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-warning text-dark me-2">
+                    <i class="bi bi-check-circle me-1"></i>Sipariş Oluştur
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">İptal</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    var productOptions = `@Html.Raw(string.Join("", (ViewBag.Products as List<Pos.Web.Models.ProductViewModel> ?? new()).Select(p => $"<option value='{p.Id}'>{p.Name} - {p.Price:C2}</option>")))`;
+    var itemIndex = 1;
+
+    document.getElementById('addItem').addEventListener('click', function () {
+        var container = document.getElementById('itemsContainer');
+        var row = document.createElement('div');
+        row.className = 'row g-2 mb-2 item-row';
+        row.innerHTML = `
+            <div class="col-md-7">
+                <select name="Items[${itemIndex}].ProductId" class="form-select">
+                    <option value="">-- Ürün Seçin --</option>
+                    ${productOptions}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input name="Items[${itemIndex}].Quantity" type="number" class="form-control" placeholder="Miktar" min="1" value="1" />
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-outline-danger w-100 remove-item"><i class="bi bi-trash"></i></button>
+            </div>`;
+        container.appendChild(row);
+        itemIndex++;
+    });
+
+    document.addEventListener('click', function (e) {
+        if (e.target.closest('.remove-item')) {
+            e.target.closest('.item-row').remove();
+        }
+    });
+</script>
+}
+

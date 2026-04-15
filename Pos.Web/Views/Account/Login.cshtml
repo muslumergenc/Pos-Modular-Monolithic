@@ -1,0 +1,36 @@
+@model Pos.Web.Models.LoginViewModel
+@{ ViewData["Title"] = "Giriş Yap"; }
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-header bg-dark text-white text-center">
+                <h4><i class="bi bi-box-arrow-in-right me-2"></i>Giriş Yap</h4>
+            </div>
+            <div class="card-body p-4">
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success">@TempData["Success"]</div>
+                }
+                <form asp-action="Login" method="post">
+                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label">E-posta</label>
+                        <input asp-for="Email" class="form-control" placeholder="ornek@mail.com" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label">Şifre</label>
+                        <input asp-for="Password" type="password" class="form-control" />
+                    </div>
+                    <button type="submit" class="btn btn-dark w-100">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>Giriş Yap
+                    </button>
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <a asp-action="Register">Hesabınız yok mu? Kayıt olun</a>
+            </div>
+        </div>
+    </div>
+</div>
+

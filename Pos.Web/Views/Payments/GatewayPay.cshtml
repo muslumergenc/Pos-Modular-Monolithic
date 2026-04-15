@@ -1,0 +1,344 @@
+@model Pos.Web.Models.GatewayPayViewModel
+@{ ViewData["Title"] = "3D Secure Ödeme"; }
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+
+        <div class="d-flex align-items-center mb-3">
+            <a asp-action="Process" asp-route-orderId="@Model.OrderId" class="btn btn-sm btn-outline-secondary me-3">
+                <i class="bi bi-arrow-left"></i> Geri
+            </a>
+            <h2 class="mb-0"><i class="bi bi-shield-lock-fill text-primary me-2"></i>3D Secure Ödeme</h2>
+        </div>
+
+        <div asp-validation-summary="All" class="alert alert-danger"
+             style="display:@(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+
+        <form asp-action="GatewayPay" method="post" id="paymentForm">
+            @Html.AntiForgeryToken()
+            <input asp-for="OrderId"  type="hidden" />
+            <input asp-for="Amount"   type="hidden" />
+            <input asp-for="Currency" type="hidden" />
+            <input asp-for="Language" type="hidden" />
+
+            <div class="row g-4">
+
+                @* Sol: Kart Önizleme *@
+                <div class="col-md-5">
+                    <div class="credit-card-preview mb-4" id="card-preview">
+                        <div class="card-inner">
+                            @* Kart Ön Yüz *@
+                            <div class="card-front">
+                                <div class="card-logo">
+                                    <i class="bi bi-credit-card-2-front-fill fs-2 text-white opacity-75"></i>
+                                </div>
+                                <div class="card-chip">
+                                    <i class="bi bi-sim-fill fs-3 text-warning opacity-75"></i>
+                                </div>
+                                <div class="card-number-display" id="previewNumber">•••• •••• •••• ••••</div>
+                                <div class="card-info-row">
+                                    <div>
+                                        <div class="card-label">Kart Sahibi</div>
+                                        <div class="card-value" id="previewName">AD SOYAD</div>
+                                    </div>
+                                    <div>
+                                        <div class="card-label">Son Kullanım</div>
+                                        <div class="card-value" id="previewExpiry">AA/YY</div>
+                                    </div>
+                                </div>
+                            </div>
+                            @* Kart Arka Yüz *@
+                            <div class="card-back">
+                                <div class="card-stripe"></div>
+                                <div class="card-cvv-row">
+                                    <span class="card-label text-dark">CVV</span>
+                                    <div class="cvv-box" id="previewCvv">•••</div>
+                                </div>
+                                <div class="text-center mt-3">
+                                    <img src="img/visa.png"
+                                         height="28" alt="3D Secure" class="me-2 opacity-75" />
+                                    <img src="img/master.png"
+                                         height="28" alt="Mastercard ID Check" class="opacity-75" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Sipariş Özeti *@
+                    <div class="card border-primary">
+                        <div class="card-body text-center">
+                            <div class="text-muted small">Sipariş No</div>
+                            <code class="fs-6">#@Model.OrderNumber</code>
+                            <hr class="my-2"/>
+                            <div class="text-muted small">Ödenecek Tutar</div>
+                            <div class="fs-3 fw-bold text-primary">@Model.Amount.ToString("C2")</div>
+                            <div class="badge bg-success mt-1">
+                                <i class="bi bi-lock-fill me-1"></i>Güvenli Ödeme
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @* Sağ: Kart Formu *@
+                <div class="col-md-7">
+                    <div class="card shadow">
+                        <div class="card-header bg-primary text-white">
+                            <i class="bi bi-credit-card me-1"></i> Kart Bilgilerinizi Girin
+                        </div>
+                        <div class="card-body p-4">
+
+                            @* Kart Numarası *@
+                            <div class="mb-3">
+                                <label asp-for="CardNumber" class="form-label fw-semibold">Kart Numarası</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-credit-card"></i></span>
+                                    <input asp-for="CardNumber"
+                                           class="form-control form-control-lg"
+                                           placeholder="0000 0000 0000 0000"
+                                           maxlength="19"
+                                           autocomplete="cc-number"
+                                           id="cardNumber"
+                                           inputmode="numeric" />
+                                </div>
+                                <span asp-validation-for="CardNumber" class="text-danger small"></span>
+                            </div>
+
+                            @* Kart Sahibi *@
+                            <div class="mb-3">
+                                <label asp-for="CardHolderName" class="form-label fw-semibold">
+                                    Kart Üzerindeki Ad Soyad
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                    <input asp-for="CardHolderName"
+                                           class="form-control form-control-lg"
+                                           placeholder="AD SOYAD"
+                                           autocomplete="cc-name"
+                                           id="cardHolder"
+                                           style="text-transform:uppercase" />
+                                </div>
+                                <span asp-validation-for="CardHolderName" class="text-danger small"></span>
+                            </div>
+
+                            @* Son Kullanım + CVV *@
+                            <div class="row g-3 mb-3">
+                                <div class="col-6">
+                                    <label class="form-label fw-semibold">Son Kullanım Tarihi</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                                        <input asp-for="ExpiryDateMonth"
+                                               class="form-control form-control-lg text-center"
+                                               placeholder="AA"
+                                               maxlength="2"
+                                               id="expiryMonth"
+                                               inputmode="numeric" />
+                                        <span class="input-group-text fw-bold">/</span>
+                                        <input asp-for="ExpiryDateYear"
+                                               class="form-control form-control-lg text-center"
+                                               placeholder="YYYY"
+                                               maxlength="4"
+                                               id="expiryYear"
+                                               inputmode="numeric" />
+                                    </div>
+                                    <span asp-validation-for="ExpiryDateMonth" class="text-danger small"></span>
+                                </div>
+                                <div class="col-6">
+                                    <label asp-for="Cvv" class="form-label fw-semibold">
+                                        CVV / CVC
+                                        <button type="button" class="btn btn-link btn-sm p-0 ms-1"
+                                                data-bs-toggle="popover"
+                                                data-bs-content="Kartınızın arka yüzündeki 3 haneli güvenlik kodudur."
+                                                data-bs-trigger="hover">
+                                            <i class="bi bi-question-circle"></i>
+                                        </button>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+                                        <input asp-for="Cvv"
+                                               class="form-control form-control-lg text-center"
+                                               placeholder="•••"
+                                               maxlength="3"
+                                               id="cvv"
+                                               inputmode="numeric"
+                                               type="password" />
+                                    </div>
+                                    <span asp-validation-for="Cvv" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            @* E-posta *@
+                            <div class="mb-4">
+                                <label asp-for="Email" class="form-label fw-semibold">
+                                    E-posta (Dekont İçin)
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                    <input asp-for="Email"
+                                           type="email"
+                                           class="form-control form-control-lg"
+                                           placeholder="ornek@mail.com"
+                                           autocomplete="email" />
+                                </div>
+                                <span asp-validation-for="Email" class="text-danger small"></span>
+                            </div>
+
+                            @* Ödeme Butonu *@
+                            <button type="submit" class="btn btn-primary w-100 btn-lg" id="payBtn">
+                                <i class="bi bi-lock-fill me-2"></i>
+                                Güvenli Ödeme Yap — @Model.Amount.ToString("C2")
+                            </button>
+
+                            <div class="text-center mt-3">
+                                <small class="text-muted">
+                                    <i class="bi bi-shield-check text-success me-1"></i>
+                                    Tüm işlemler 256-bit SSL ile şifrelenmektedir.
+                                    Kart bilgileriniz sunucularımızda saklanmaz.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // ── Kart Numarası Formatla + Önizle ─────────────────────
+    document.getElementById('cardNumber').addEventListener('input', function () {
+        let v = this.value.replace(/\D/g, '').substring(0, 16);
+        this.value = v.replace(/(.{4})/g, '$1 ').trim();
+        const masked = v.padEnd(16, '\u2022').replace(/(.{4})/g, '$1 ').trim();
+        document.getElementById('previewNumber').textContent = masked;
+
+        // Kart ağı tespiti
+        const preview = document.querySelector('.credit-card-preview');
+        preview.classList.remove('card-visa', 'card-master', 'card-amex');
+        if      (/^4/.test(v))       preview.classList.add('card-visa');
+        else if (/^5[1-5]/.test(v)) preview.classList.add('card-master');
+        else if (/^3[47]/.test(v))  preview.classList.add('card-amex');
+    });
+
+    // ── Kart Sahibi Önizle ───────────────────────────────────
+    document.getElementById('cardHolder').addEventListener('input', function () {
+        this.value = this.value.toUpperCase();
+        document.getElementById('previewName').textContent = this.value || 'AD SOYAD';
+    });
+
+    // ── Son Kullanım Önizle ──────────────────────────────────
+    function updateExpiry() {
+        const m = document.getElementById('expiryMonth').value.padStart(2, '0') || 'AA';
+        const y = document.getElementById('expiryYear').value.slice(-2)         || 'YY';
+        document.getElementById('previewExpiry').textContent = m + '/' + y;
+    }
+    document.getElementById('expiryMonth').addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '');
+        updateExpiry();
+        if (this.value.length === 2) document.getElementById('expiryYear').focus();
+    });
+    document.getElementById('expiryYear').addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '');
+        updateExpiry();
+    });
+
+    // ── CVV: Kart Çevir + Önizle ─────────────────────────────
+    document.getElementById('cvv').addEventListener('focus', function () {
+        document.getElementById('card-preview').classList.add('flipped');
+    });
+    document.getElementById('cvv').addEventListener('blur', function () {
+        document.getElementById('card-preview').classList.remove('flipped');
+    });
+    document.getElementById('cvv').addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '');
+        document.getElementById('previewCvv').textContent = this.value.padEnd(3, '\u2022');
+    });
+
+    // ── Submit: Buton Disable + Spinner ──────────────────────
+    document.getElementById('paymentForm').addEventListener('submit', function () {
+        const btn = document.getElementById('payBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Bankaya Bağlanıyor...';
+    });
+
+    // ── Popover Init ─────────────────────────────────────────
+    document.querySelectorAll('[data-bs-toggle="popover"]').forEach(el =>
+        new bootstrap.Popover(el));
+</script>
+
+<style>
+    /* ── Kredi Kartı Önizleme ──────────────────────────────── */
+    .credit-card-preview {
+        perspective: 1000px;
+        width: 100%;
+        height: 210px;
+    }
+    .card-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transition: transform 0.6s;
+        transform-style: preserve-3d;
+    }
+    .credit-card-preview.flipped .card-inner {
+        transform: rotateY(180deg);
+    }
+    .card-front, .card-back {
+        position: absolute;
+        inset: 0;
+        border-radius: 16px;
+        padding: 20px 24px;
+        backface-visibility: hidden;
+        background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #0d47a1 100%);
+        box-shadow: 0 8px 32px rgba(26,35,126,0.35);
+        color: white;
+    }
+    .credit-card-preview.card-visa .card-front,
+    .credit-card-preview.card-visa .card-back {
+        background: linear-gradient(135deg, #1565c0 0%, #1976d2 50%, #0288d1 100%);
+    }
+    .credit-card-preview.card-master .card-front,
+    .credit-card-preview.card-master .card-back {
+        background: linear-gradient(135deg, #880e4f 0%, #c62828 50%, #e53935 100%);
+    }
+    .card-back {
+        transform: rotateY(180deg);
+        background: linear-gradient(135deg, #37474f 0%, #546e7a 100%) !important;
+    }
+    .card-logo  { text-align: right; margin-bottom: 8px; }
+    .card-chip  { margin-bottom: 12px; }
+    .card-number-display {
+        font-size: 1.15rem;
+        letter-spacing: 3px;
+        font-family: 'Courier New', monospace;
+        margin-bottom: 16px;
+        word-spacing: 6px;
+    }
+    .card-info-row {
+        display: flex;
+        justify-content: space-between;
+    }
+    .card-label { font-size: 0.62rem; opacity: 0.75; text-transform: uppercase; letter-spacing: 1px; }
+    .card-value { font-size: 0.9rem;  font-weight: 600; letter-spacing: 1px; }
+    .card-stripe {
+        background: #1c1c1c;
+        height: 42px;
+        margin: 0 -24px 20px;
+    }
+    .card-cvv-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+    .cvv-box {
+        background: white;
+        color: #222;
+        padding: 4px 18px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 1.1rem;
+        letter-spacing: 5px;
+    }
+</style>
+}

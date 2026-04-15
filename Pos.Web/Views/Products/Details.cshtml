@@ -1,0 +1,47 @@
+@model Pos.Web.Models.ProductViewModel
+@{ ViewData["Title"] = Model.Name; }
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-box-seam me-2"></i>@Model.Name</h2>
+    <a asp-action="Index" class="btn btn-secondary">Listeye Dön</a>
+</div>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card shadow">
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item d-flex justify-content-between">
+                    <strong>Kategori</strong>
+                    <span class="badge bg-secondary">@Model.CategoryName</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <strong>Fiyat</strong>
+                    <span class="fs-5 fw-bold text-success">@Model.Price.ToString("C2")</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <strong>Stok</strong>
+                    @if (Model.Stock < 10)
+                    { <span class="badge bg-danger fs-6">@Model.Stock</span> }
+                    else
+                    { <span class="badge bg-success fs-6">@Model.Stock</span> }
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <strong>Durum</strong>
+                    @if (Model.IsActive) { <span class="badge bg-success">Aktif</span> }
+                    else { <span class="badge bg-secondary">Pasif</span> }
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <strong>Eklenme</strong>
+                    <span>@Model.CreatedAt.ToString("dd.MM.yyyy")</span>
+                </li>
+            </ul>
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                <div class="card-body">
+                    <p class="text-muted">@Model.Description</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+

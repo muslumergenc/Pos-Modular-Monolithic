@@ -1,0 +1,44 @@
+@model List<Pos.Web.Models.ProductViewModel>
+@{ ViewData["Title"] = "Ürünler"; }
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-box-seam me-2"></i>Ürün Listesi</h2>
+    <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Yeni Ürün</a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Ad</th><th>Kategori</th><th>Fiyat</th><th>Stok</th><th>Durum</th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td>@p.Name</td>
+                    <td><span class="badge bg-secondary">@p.CategoryName</span></td>
+                    <td><strong>@p.Price.ToString("C2")</strong></td>
+                    <td>
+                        @if (p.Stock < 10)
+                        { <span class="badge bg-danger">@p.Stock</span> }
+                        else
+                        { <span class="badge bg-success">@p.Stock</span> }
+                    </td>
+                    <td>
+                        @if (p.IsActive) { <span class="badge bg-success">Aktif</span> }
+                        else { <span class="badge bg-secondary">Pasif</span> }
+                    </td>
+                    <td><a asp-action="Details" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">Detay</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+

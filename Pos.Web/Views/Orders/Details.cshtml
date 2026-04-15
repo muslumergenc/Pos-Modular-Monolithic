@@ -1,0 +1,72 @@
+@model Pos.Web.Models.OrderViewModel
+@{ ViewData["Title"] = "Sipariş Detayı"; }
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-receipt me-2"></i>Sipariş #@Model.Id.ToString()[..8]</h2>
+    <div>
+        @if (Model.Status == 0 || Model.Status == 1)
+        {
+            <a asp-controller="Payments" asp-action="Process" asp-route-orderId="@Model.Id" class="btn btn-success me-2">
+                <i class="bi bi-credit-card me-1"></i>Ödeme Al
+            </a>
+            <form asp-action="Cancel" asp-route-id="@Model.Id" method="post" style="display:inline">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('İptal etmek istediğinize emin misiniz?')">
+                    <i class="bi bi-x-circle me-1"></i>İptal Et
+                </button>
+            </form>
+        }
+        <a asp-action="Index" class="btn btn-secondary ms-2">Listeye Dön</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header"><strong>Sipariş Bilgileri</strong></div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item"><strong>Müşteri:</strong> @Model.CustomerName</li>
+                <li class="list-group-item">
+                    <strong>Durum:</strong>
+                    @{
+                        var cls = Model.Status switch { 0 => "bg-secondary", 1 => "bg-warning text-dark", 2 => "bg-success", 3 => "bg-danger", _ => "bg-light" };
+                    }
+                    <span class="badge @cls">@Model.StatusName</span>
+                </li>
+                <li class="list-group-item"><strong>Toplam:</strong> <span class="fs-5 text-success fw-bold">@Model.TotalAmount.ToString("C2")</span></li>
+                <li class="list-group-item"><strong>Tarih:</strong> @Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
+                @if (!string.IsNullOrEmpty(Model.Notes))
+                {
+                    <li class="list-group-item"><strong>Not:</strong> @Model.Notes</li>
+                }
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header"><strong>Sipariş Kalemleri</strong></div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead><tr><th>Ürün</th><th>Miktar</th><th>Birim Fiyat</th><th>Toplam</th></tr></thead>
+                    <tbody>
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>@item.ProductName</td>
+                                <td>@item.Quantity</td>
+                                <td>@item.UnitPrice.ToString("C2")</td>
+                                <td><strong>@item.TotalPrice.ToString("C2")</strong></td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-dark">
+                            <td colspan="3" class="text-end"><strong>TOPLAM</strong></td>
+                            <td><strong>@Model.TotalAmount.ToString("C2")</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+

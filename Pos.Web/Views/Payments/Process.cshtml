@@ -1,0 +1,73 @@
+@model Pos.Web.Models.ProcessPaymentViewModel
+@{ ViewData["Title"] = "Ödeme Al"; }
+
+<h2><i class="bi bi-credit-card me-2"></i>Ödeme İşlemi</h2><hr />
+<div class="row g-4">
+    <div class="col-md-5">
+        <div class="card shadow h-100">
+            <div class="card-header bg-secondary text-white">
+                <i class="bi bi-cash-coin me-1"></i> Standart Ödeme
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Process" method="post">
+                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+                    <input asp-for="OrderId" type="hidden" />
+                    <div class="mb-3">
+                        <label asp-for="Amount" class="form-label fw-semibold">Tutar</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₺</span>
+                            <input asp-for="Amount" type="number" step="0.01" class="form-control" readonly />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Method" class="form-label fw-semibold">Ödeme Yöntemi</label>
+                        <select asp-for="Method" class="form-select">
+                            <option value="0">🪙 Nakit</option>
+                            <option value="1">💳 Kredi Kartı</option>
+                            <option value="2">🏦 Banka Kartı</option>
+                            <option value="3">📱 Dijital Ödeme</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Notes" class="form-label fw-semibold">Not (İsteğe Bağlı)</label>
+                        <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 fs-5">
+                        <i class="bi bi-check-circle me-1"></i>Ödemeyi Tamamla
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-1 d-flex align-items-center justify-content-center">
+        <div class="text-muted fw-bold">VEYA</div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="card shadow border-primary h-100">
+            <div class="card-header bg-primary text-white">
+                <i class="bi bi-shield-lock-fill me-1"></i> 3D Secure ile Öde (Garanti Bankası)
+            </div>
+            <div class="card-body p-4 d-flex flex-column justify-content-between">
+                <div>
+                    <p class="text-muted">Kredi kartınızla güvenli 3D Secure ödeme yapın. Bankanız sizi SMS ile doğrulayacaktır.</p>
+                    <ul class="list-unstyled text-muted small">
+                        <li><i class="bi bi-check-circle-fill text-success me-1"></i>256-bit SSL şifreleme</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-1"></i>3D Secure güvencesi</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-1"></i>Anında onay</li>
+                    </ul>
+                    <div class="d-flex gap-2 mt-3 mb-4">
+                        <img src="../img/master.png" height="60" alt="Mastercard" />
+                        <img src="../img/visa.png" height="60" alt="Visa" />
+                    </div>
+                </div>
+                <a asp-action="GatewayPay" asp-route-orderId="@Model.OrderId"
+                   class="btn btn-primary w-100 fs-5">
+                    <i class="bi bi-shield-lock me-1"></i>3D Secure ile Öde — @Model.Amount.ToString("C2")
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
