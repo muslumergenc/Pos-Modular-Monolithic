@@ -1,0 +1,50 @@
+# ── Build Çıktıları ───────────────────────────────────────────
+[Bb]in/
+[Oo]bj/
+
+# ── IDE / Editör ──────────────────────────────────────────────
+.idea/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+
+# ── .NET / NuGet ──────────────────────────────────────────────
+project.nuget.cache
+*.nuget.dgspec.json
+*.nuget.g.props
+*.nuget.g.targets
+project.assets.json
+project.packagespec.json
+
+# ── Veritabanı ────────────────────────────────────────────────
+*.db
+*.db-shm
+*.db-wal
+
+# ── Uygulama Sırları ──────────────────────────────────────────
+appsettings.Production.json
+secrets.json
+*.pfx
+*.p12
+
+# ── Log Dosyaları ─────────────────────────────────────────────
+*.log
+logs/
+
+# ── macOS ─────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverrideTimeout
+
+# ── Windows ───────────────────────────────────────────────────
+Thumbs.db
+Desktop.ini
+
+# ── Rider / ReSharper ─────────────────────────────────────────
+_ReSharper*/
+*.ReSharper
+.idea.*.sha1
+
