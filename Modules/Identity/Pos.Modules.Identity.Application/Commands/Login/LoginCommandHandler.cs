@@ -28,7 +28,8 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginRes
         if (!passwordValid)
             return Result<LoginResponseDto>.Failure("E-posta veya şifre hatalı.");
 
-        var (token, expiresAt) = _jwtTokenService.GenerateToken(user);
-        return Result<LoginResponseDto>.Success(new LoginResponseDto(token, user.Email!, user.FullName, user.Id, expiresAt));
+        var roles = await _userManager.GetRolesAsync(user);
+        var (token, expiresAt) = _jwtTokenService.GenerateToken(user, roles);
+        return Result<LoginResponseDto>.Success(new LoginResponseDto(token, user.Email!, user.FullName, user.Id, expiresAt, roles));
     }
 }

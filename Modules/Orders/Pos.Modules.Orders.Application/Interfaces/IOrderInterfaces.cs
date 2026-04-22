@@ -16,3 +16,10 @@ public interface ICustomerService
     Task<string?> GetCustomerNameAsync(Guid customerId, CancellationToken ct = default);
 }
 
+public interface ITableService
+{
+    Task<int?> GetTableNumberAsync(Guid tableId, CancellationToken ct = default);
+    Task SetTableOccupiedAsync(Guid tableId, CancellationToken ct = default);
+    Task SetTableAvailableAsync(Guid tableId, CancellationToken ct = default);
+}
+

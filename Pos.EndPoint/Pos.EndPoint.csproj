@@ -28,6 +28,8 @@
       <ProjectReference Include="..\Modules\Orders\Pos.Modules.Orders.Presentation\Pos.Modules.Orders.Presentation.csproj" />
       <ProjectReference Include="..\Modules\Payments\Pos.Modules.Payments.Infrastructure\Pos.Modules.Payments.Infrastructure.csproj" />
       <ProjectReference Include="..\Modules\Payments\Pos.Modules.Payments.Presentation\Pos.Modules.Payments.Presentation.csproj" />
+      <ProjectReference Include="..\Modules\Tables\Pos.Modules.Tables.Infrastructure\Pos.Modules.Tables.Infrastructure.csproj" />
+      <ProjectReference Include="..\Modules\Tables\Pos.Modules.Tables.Presentation\Pos.Modules.Tables.Presentation.csproj" />
     </ItemGroup>
 
 </Project>

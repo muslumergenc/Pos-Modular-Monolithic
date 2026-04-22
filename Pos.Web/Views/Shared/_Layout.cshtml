@@ -13,7 +13,7 @@
         <nav class="navbar navbar-expand-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
             <div class="container-fluid">
                 <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">
-                    <i class="bi bi-cash-register me-1"></i>POS Sistemi
+                    <i class="bi bi-cup-hot me-1"></i>Restoran POS
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse">
                     <span class="navbar-toggler-icon"></span>
@@ -21,18 +21,13 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-light" asp-controller="Products" asp-action="Index">
-                                <i class="bi bi-box-seam me-1"></i>Ürünler
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-light" asp-controller="Customers" asp-action="Index">
-                                <i class="bi bi-people me-1"></i>Müşteriler
+                            <a class="nav-link text-light" asp-controller="Tables" asp-action="Index">
+                                <i class="bi bi-grid-3x3-gap me-1"></i>Masalar
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-light" asp-controller="Orders" asp-action="Index">
-                                <i class="bi bi-cart me-1"></i>Siparişler
+                                <i class="bi bi-receipt me-1"></i>Siparişler
                             </a>
                         </li>
                         <li class="nav-item">
@@ -40,6 +35,18 @@
                                 <i class="bi bi-credit-card me-1"></i>Ödemeler
                             </a>
                         </li>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-light" href="#" data-bs-toggle="dropdown">
+                                    <i class="bi bi-gear me-1"></i>Yönetim
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" asp-controller="Products" asp-action="Index"><i class="bi bi-box-seam me-1"></i>Menü (Ürünler)</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Customers" asp-action="Index"><i class="bi bi-people me-1"></i>Müşteriler</a></li>
+                                </ul>
+                            </li>
+                        }
                     </ul>
                     <ul class="navbar-nav">
                         @if (Context.Session.GetString("JwtToken") != null)

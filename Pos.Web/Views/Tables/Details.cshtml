@@ -1,0 +1,110 @@
+@model Pos.Web.Models.TableViewModel
+@{
+    ViewData["Title"] = $"Masa {Model.Number}";
+    var orders = ViewBag.Orders as List<Pos.Web.Models.OrderViewModel> ?? new();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>
+        <i class="bi bi-grid-3x3-gap me-2"></i>Masa @Model.Number
+        @if (!string.IsNullOrEmpty(Model.Label)) { <small class="text-muted fs-6">(@Model.Label)</small> }
+    </h2>
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Geri
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">@TempData["Success"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+
+<!-- Masa Bilgisi -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card text-center border-@Model.StatusBadge shadow-sm py-3">
+            <div class="card-body">
+                <i class="bi @Model.StatusIcon text-@Model.StatusBadge fs-1"></i>
+                <h3 class="mt-2"><span class="badge bg-@Model.StatusBadge">@Model.StatusName</span></h3>
+                <p class="text-muted mb-0"><i class="bi bi-people me-1"></i>@Model.Capacity kişilik</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card shadow-sm h-100">
+            <div class="card-body d-flex flex-column justify-content-center gap-2">
+                <a asp-action="NewOrder" asp-route-id="@Model.Id" class="btn btn-success btn-lg">
+                    <i class="bi bi-plus-circle me-2"></i>Sipariş Al
+                </a>
+                @if (User.IsInRole("Admin"))
+                {
+                    <div class="d-flex gap-2">
+                        <form asp-action="UpdateStatus" method="post" class="flex-fill">
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="status" value="0" />
+                            <button class="btn btn-outline-success w-100" @(Model.Status == 0 ? "disabled" : "")>
+                                <i class="bi bi-check-circle me-1"></i>Boş Yap
+                            </button>
+                        </form>
+                        <form asp-action="UpdateStatus" method="post" class="flex-fill">
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="status" value="2" />
+                            <button class="btn btn-outline-warning w-100" @(Model.Status == 2 ? "disabled" : "")>
+                                <i class="bi bi-clock me-1"></i>Rezerve
+                            </button>
+                        </form>
+                        <form asp-action="Delete" method="post" class="flex-fill"
+                              onsubmit="return confirm('Masa silinsin mi?')">
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button class="btn btn-outline-danger w-100">
+                                <i class="bi bi-trash me-1"></i>Sil
+                            </button>
+                        </form>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Aktif Siparişler -->
+<h5 class="mb-3"><i class="bi bi-receipt me-2"></i>Aktif Siparişler</h5>
+@if (orders.Any())
+{
+    @foreach (var order in orders.OrderByDescending(o => o.CreatedAt))
+    {
+        <div class="card mb-3 shadow-sm border-@order.StatusBadge">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="bi bi-receipt me-1"></i>
+                    <strong>@order.CustomerName</strong>
+                    <small class="text-muted ms-2">@order.CreatedAt.ToString("HH:mm")</small>
+                </span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-@order.StatusBadge">@order.StatusName</span>
+                    <a asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id"
+                       class="btn btn-sm btn-outline-primary">Detay</a>
+                </div>
+            </div>
+            <div class="card-body py-2">
+                <div class="row">
+                    @foreach (var item in order.Items)
+                    {
+                        <div class="col-md-6 small py-1">
+                            <i class="bi bi-dot me-1"></i>@item.ProductName
+                            <span class="badge bg-light text-dark ms-1">x@item.Quantity</span>
+                            <span class="text-muted ms-1">@item.TotalPrice.ToString("N2") ₺</span>
+                        </div>
+                    }
+                </div>
+                <div class="text-end fw-bold mt-1">Toplam: @order.TotalAmount.ToString("N2") ₺</div>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="text-center py-4 text-muted">
+        <i class="bi bi-inbox fs-2 d-block mb-2"></i>Bu masaya ait aktif sipariş yok.
+    </div>
+}

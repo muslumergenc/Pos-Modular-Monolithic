@@ -42,6 +42,12 @@ namespace Pos.Modules.Orders.Infrastructure.Persistence.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("INTEGER");
 
+                    b.Property<Guid?>("TableId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("TableNumber")
+                        .HasColumnType("INTEGER");
+
                     b.Property<decimal>("TotalAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("TEXT");

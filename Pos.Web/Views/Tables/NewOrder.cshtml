@@ -1,0 +1,150 @@
+@model Pos.Web.Models.CreateOrderViewModel
+@{
+    ViewData["Title"] = "Sipariş Al";
+    var table = ViewBag.Table as Pos.Web.Models.TableViewModel;
+    var customers = ViewBag.Customers as List<Pos.Web.Models.CustomerViewModel> ?? new();
+    var products  = ViewBag.Products  as List<Pos.Web.Models.ProductViewModel>  ?? new();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-receipt-cutoff me-2"></i>Sipariş Al — Masa @(table?.Number)</h2>
+    <a asp-action="Details" asp-route-id="@Model.TableId" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Geri
+    </a>
+</div>
+
+<form asp-action="NewOrder" method="post" id="orderForm">
+    <input type="hidden" asp-for="TableId" />
+    <div class="row g-3">
+
+        <!-- Sol: Müşteri + Notlar -->
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header fw-semibold"><i class="bi bi-person me-2"></i>Müşteri</div>
+                <div class="card-body">
+                    <select asp-for="CustomerId" class="form-select">
+                        <option value="">-- Müşteri Seç --</option>
+                        @foreach (var c in customers)
+                        {
+                            <option value="@c.Id">@c.FullName</option>
+                        }
+                    </select>
+                    <span asp-validation-for="CustomerId" class="text-danger small"></span>
+                </div>
+            </div>
+            <div class="card-shadow-sm card border-0 bg-light p-3 rounded">
+                <label class="form-label fw-semibold">Notlar</label>
+                <textarea asp-for="Notes" class="form-control" rows="3" placeholder="Sipariş notu..."></textarea>
+            </div>
+        </div>
+
+        <!-- Orta: Ürün Listesi -->
+        <div class="col-md-5">
+            <div class="card shadow-sm">
+                <div class="card-header fw-semibold"><i class="bi bi-grid me-2"></i>Menü</div>
+                <div class="card-body p-2" style="max-height:450px; overflow-y:auto;">
+                    @foreach (var p in products.Where(p => p.IsActive))
+                    {
+                        <div class="d-flex justify-content-between align-items-center border rounded p-2 mb-1">
+                            <div>
+                                <div class="fw-semibold small">@p.Name</div>
+                                <div class="text-success small fw-bold">@p.Price.ToString("N2") ₺</div>
+                                <div class="text-muted" style="font-size:11px;">@p.CategoryName</div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                    onclick="addProduct('@p.Id','@p.Name',@p.Price)">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Sağ: Sepet -->
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-header fw-semibold"><i class="bi bi-cart me-2"></i>Sepet</div>
+                <div class="card-body p-2" id="cartBody">
+                    <p class="text-muted text-center small" id="emptyCart">Sepet boş</p>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between fw-bold mb-2">
+                        <span>Toplam</span>
+                        <span id="totalAmount">0,00 ₺</span>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100" id="submitBtn" disabled>
+                        <i class="bi bi-check-circle me-1"></i>Siparişi Gönder
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- hidden items container -->
+    <div id="hiddenItems"></div>
+</form>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger mt-3">
+        @foreach (var e in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        { <div>@e.ErrorMessage</div> }
+    </div>
+}
+
+<script>
+let cart = [];
+
+function addProduct(id, name, price) {
+    const existing = cart.find(i => i.id === id);
+    if (existing) { existing.qty++; }
+    else { cart.push({ id, name, price: parseFloat(price), qty: 1 }); }
+    renderCart();
+}
+
+function removeProduct(id) {
+    cart = cart.filter(i => i.id !== id);
+    renderCart();
+}
+
+function changeQty(id, delta) {
+    const item = cart.find(i => i.id === id);
+    if (!item) return;
+    item.qty += delta;
+    if (item.qty <= 0) cart = cart.filter(i => i.id !== id);
+    renderCart();
+}
+
+function renderCart() {
+    const body = document.getElementById('cartBody');
+    const empty = document.getElementById('emptyCart');
+    const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+    document.getElementById('totalAmount').textContent = total.toFixed(2).replace('.', ',') + ' ₺';
+    document.getElementById('submitBtn').disabled = cart.length === 0;
+
+    if (cart.length === 0) {
+        body.innerHTML = '<p class="text-muted text-center small" id="emptyCart">Sepet boş</p>';
+        document.getElementById('hiddenItems').innerHTML = '';
+        return;
+    }
+
+    let html = '';
+    let hidden = '';
+    cart.forEach((item, idx) => {
+        html += `<div class="d-flex justify-content-between align-items-center mb-1 small">
+            <span class="text-truncate" style="max-width:90px">${item.name}</span>
+            <div class="d-flex align-items-center gap-1">
+                <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="changeQty('${item.id}',-1)">-</button>
+                <span class="fw-bold">${item.qty}</span>
+                <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="changeQty('${item.id}',1)">+</button>
+                <span class="text-success ms-1">${(item.price*item.qty).toFixed(2).replace('.',',')}₺</span>
+                <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1" onclick="removeProduct('${item.id}')"><i class="bi bi-x"></i></button>
+            </div>
+        </div>`;
+        hidden += `<input type="hidden" name="Items[${idx}].ProductId" value="${item.id}" />
+                   <input type="hidden" name="Items[${idx}].Quantity" value="${item.qty}" />`;
+    });
+    body.innerHTML = html;
+    document.getElementById('hiddenItems').innerHTML = hidden;
+}
+</script>

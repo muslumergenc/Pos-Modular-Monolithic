@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Pos.Web.Models;
 using Pos.Web.Services;
 
 namespace Pos.Web.Controllers;
 
+[Authorize(Roles = "Admin")]
 public class CustomersController : Controller
 {
     private readonly ApiClient _api;

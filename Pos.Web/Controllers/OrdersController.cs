@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Pos.Web.Models;
 using Pos.Web.Services;
 
 namespace Pos.Web.Controllers;
 
+[Authorize(Roles = "Admin,Waiter,Cashier")]
 public class OrdersController : Controller
 {
     private readonly ApiClient _api;
@@ -23,26 +25,45 @@ public class OrdersController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create()
     {
         ViewBag.Customers = await _api.GetCustomersAsync() ?? new();
         ViewBag.Products = await _api.GetProductsAsync() ?? new();
+        ViewBag.Tables = await _api.GetTablesAsync() ?? new();
         return View(new CreateOrderViewModel());
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create(CreateOrderViewModel vm)
     {
         if (!ModelState.IsValid)
         {
             ViewBag.Customers = await _api.GetCustomersAsync() ?? new();
             ViewBag.Products = await _api.GetProductsAsync() ?? new();
+            ViewBag.Tables = await _api.GetTablesAsync() ?? new();
             return View(vm);
         }
         var (success, order, error) = await _api.CreateOrderAsync(vm);
-        if (!success) { ModelState.AddModelError("", error ?? "Hata oluştu."); ViewBag.Customers = await _api.GetCustomersAsync() ?? new(); ViewBag.Products = await _api.GetProductsAsync() ?? new(); return View(vm); }
+        if (!success)
+        {
+            ModelState.AddModelError("", error ?? "Hata oluştu.");
+            ViewBag.Customers = await _api.GetCustomersAsync() ?? new();
+            ViewBag.Products = await _api.GetProductsAsync() ?? new();
+            ViewBag.Tables = await _api.GetTablesAsync() ?? new();
+            return View(vm);
+        }
         TempData["Success"] = "Sipariş başarıyla oluşturuldu.";
         return RedirectToAction(nameof(Details), new { id = order!.Id });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> UpdateStatus(Guid id, int status)
+    {
+        await _api.UpdateOrderStatusAsync(id, status);
+        TempData["Success"] = "Sipariş durumu güncellendi.";
+        return RedirectToAction(nameof(Details), new { id });
     }
 
     [HttpPost]

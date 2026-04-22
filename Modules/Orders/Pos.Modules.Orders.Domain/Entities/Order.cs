@@ -5,17 +5,19 @@ namespace Pos.Modules.Orders.Domain.Entities;
 
 public class Order : BaseEntity
 {
+    public Guid? TableId     { get; private set; }
+    public int?  TableNumber { get; private set; }
     public Guid CustomerId { get; private set; }
     public string CustomerName { get; private set; } = string.Empty;
-    public OrderStatus Status { get; private set; } = OrderStatus.Pending;
+    public OrderStatus Status { get; private set; } = OrderStatus.Received;
     public decimal TotalAmount { get; private set; }
     public string? Notes { get; private set; }
     public ICollection<OrderItem> Items { get; private set; } = new List<OrderItem>();
 
     private Order() { }
 
-    public static Order Create(Guid customerId, string customerName, string? notes = null)
-        => new Order { CustomerId = customerId, CustomerName = customerName, Notes = notes };
+    public static Order Create(Guid customerId, string customerName, string? notes = null, Guid? tableId = null, int? tableNumber = null)
+        => new Order { CustomerId = customerId, CustomerName = customerName, Notes = notes, TableId = tableId, TableNumber = tableNumber };
 
     public void AddItem(Guid productId, string productName, int quantity, decimal unitPrice)
     {
@@ -38,7 +40,6 @@ public class Order : BaseEntity
         Status = OrderStatus.Cancelled;
         SetUpdatedAt();
     }
-
     private void RecalculateTotal() => TotalAmount = Items.Sum(i => i.TotalPrice);
 }
 

@@ -18,6 +18,7 @@ public static class OrdersInfrastructureExtensions
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<ICustomerService, CustomerService>();
+        services.AddScoped<ITableService, TableService>();
         services.AddOrdersApplication();
         return services;
     }

@@ -4,6 +4,7 @@ using Pos.Modules.Orders.Application.DTOs;
 using Pos.Modules.Orders.Application.Interfaces;
 using Pos.Modules.Orders.Application.Queries;
 using Pos.Modules.Orders.Domain.Entities;
+using Pos.Modules.Orders.Domain.Enums;
 using Pos.Shared.Common;
 
 namespace Pos.Modules.Orders.Application.Handlers;
@@ -16,12 +17,14 @@ public class OrderCommandHandler :
     private readonly IOrderRepository _repo;
     private readonly IProductService _productService;
     private readonly ICustomerService _customerService;
+    private readonly ITableService _tableService;
 
-    public OrderCommandHandler(IOrderRepository repo, IProductService productService, ICustomerService customerService)
+    public OrderCommandHandler(IOrderRepository repo, IProductService productService, ICustomerService customerService, ITableService tableService)
     {
         _repo = repo;
         _productService = productService;
         _customerService = customerService;
+        _tableService = tableService;
     }
 
     public async Task<Result<OrderDto>> Handle(CreateOrderCommand req, CancellationToken ct)
@@ -29,7 +32,15 @@ public class OrderCommandHandler :
         var customerName = await _customerService.GetCustomerNameAsync(req.CustomerId, ct);
         if (customerName is null) return Result<OrderDto>.Failure("Müşteri bulunamadı.");
 
-        var order = Order.Create(req.CustomerId, customerName, req.Notes);
+        int? tableNumber = null;
+        if (req.TableId.HasValue)
+        {
+            tableNumber = await _tableService.GetTableNumberAsync(req.TableId.Value, ct);
+            if (tableNumber is null) return Result<OrderDto>.Failure("Masa bulunamadı.");
+            await _tableService.SetTableOccupiedAsync(req.TableId.Value, ct);
+        }
+
+        var order = Order.Create(req.CustomerId, customerName, req.Notes, req.TableId, tableNumber);
 
         foreach (var item in req.Items)
         {
@@ -67,9 +78,20 @@ public class OrderCommandHandler :
     }
 
     private static OrderDto Map(Order o) => new(
-        o.Id, o.CustomerId, o.CustomerName, o.Status, o.TotalAmount, o.Notes,
+        o.Id, o.TableId, o.TableNumber, o.CustomerId, o.CustomerName, o.Status, StatusLabel(o.Status), o.TotalAmount, o.Notes,
         o.Items.Select(i => new OrderItemDto(i.Id, i.ProductId, i.ProductName, i.Quantity, i.UnitPrice, i.TotalPrice)),
         o.CreatedAt);
+
+    private static string StatusLabel(OrderStatus s) => s switch
+    {
+        OrderStatus.Received  => "Alındı",
+        OrderStatus.InKitchen => "Mutfakta",
+        OrderStatus.Ready     => "Hazır",
+        OrderStatus.Served    => "Servis Edildi",
+        OrderStatus.Completed => "Tamamlandı",
+        OrderStatus.Cancelled => "İptal",
+        _ => s.ToString()
+    };
 }
 
 public class OrderQueryHandler :
@@ -85,7 +107,7 @@ public class OrderQueryHandler :
             ? await _repo.FindAsync(o => o.CustomerId == req.CustomerId.Value, ct)
             : await _repo.GetAllAsync(ct);
         return Result<IEnumerable<OrderDto>>.Success(list.Select(o => new OrderDto(
-            o.Id, o.CustomerId, o.CustomerName, o.Status, o.TotalAmount, o.Notes,
+            o.Id, o.TableId, o.TableNumber, o.CustomerId, o.CustomerName, o.Status, StatusLabel(o.Status), o.TotalAmount, o.Notes,
             o.Items.Select(i => new OrderItemDto(i.Id, i.ProductId, i.ProductName, i.Quantity, i.UnitPrice, i.TotalPrice)),
             o.CreatedAt)));
     }
@@ -95,9 +117,20 @@ public class OrderQueryHandler :
         var o = await _repo.GetByIdAsync(req.Id, ct);
         if (o is null) return Result<OrderDto>.Failure("Sipariş bulunamadı.");
         return Result<OrderDto>.Success(new OrderDto(
-            o.Id, o.CustomerId, o.CustomerName, o.Status, o.TotalAmount, o.Notes,
+            o.Id, o.TableId, o.TableNumber, o.CustomerId, o.CustomerName, o.Status, StatusLabel(o.Status), o.TotalAmount, o.Notes,
             o.Items.Select(i => new OrderItemDto(i.Id, i.ProductId, i.ProductName, i.Quantity, i.UnitPrice, i.TotalPrice)),
             o.CreatedAt));
     }
+
+    private static string StatusLabel(OrderStatus s) => s switch
+    {
+        OrderStatus.Received  => "Alındı",
+        OrderStatus.InKitchen => "Mutfakta",
+        OrderStatus.Ready     => "Hazır",
+        OrderStatus.Served    => "Servis Edildi",
+        OrderStatus.Completed => "Tamamlandı",
+        OrderStatus.Cancelled => "İptal",
+        _ => s.ToString()
+    };
 }
 

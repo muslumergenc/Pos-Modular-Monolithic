@@ -4,6 +4,6 @@ namespace Pos.Modules.Identity.Application.Interfaces;
 
 public interface IJwtTokenService
 {
-    (string Token, DateTime ExpiresAt) GenerateToken(AppUser user);
+    (string Token, DateTime ExpiresAt) GenerateToken(AppUser user, IList<string> roles);
 }
 

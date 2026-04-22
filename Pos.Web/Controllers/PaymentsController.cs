@@ -5,6 +5,7 @@ using Pos.Web.Services;
 
 namespace Pos.Web.Controllers;
 
+[Authorize(Roles = "Admin")]
 public class PaymentsController : Controller
 {
     private readonly ApiClient _api;

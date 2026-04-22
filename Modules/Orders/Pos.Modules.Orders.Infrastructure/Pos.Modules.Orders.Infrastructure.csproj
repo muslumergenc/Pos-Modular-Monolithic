@@ -18,6 +18,7 @@
     <ProjectReference Include="..\Pos.Modules.Orders.Application\Pos.Modules.Orders.Application.csproj" />
     <ProjectReference Include="..\..\Catalog\Pos.Modules.Catalog.Infrastructure\Pos.Modules.Catalog.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Customers\Pos.Modules.Customers.Infrastructure\Pos.Modules.Customers.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Tables\Pos.Modules.Tables.Infrastructure\Pos.Modules.Tables.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

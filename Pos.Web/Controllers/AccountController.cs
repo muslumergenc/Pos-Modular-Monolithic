@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Pos.Web.Models;
 using Pos.Web.Services;
+using System.Security.Claims;
 
 namespace Pos.Web.Controllers;
 
@@ -10,15 +12,39 @@ public class AccountController : Controller
     public AccountController(ApiClient api) => _api = api;
 
     [HttpGet]
-    public IActionResult Login() => View();
+    public IActionResult Login(string? returnUrl = null)
+    {
+        if (User.Identity?.IsAuthenticated == true)
+            return RedirectToAction("Index", "Home");
+        ViewData["ReturnUrl"] = returnUrl;
+        return View();
+    }
 
     [HttpPost]
-    public async Task<IActionResult> Login(LoginViewModel vm)
+    public async Task<IActionResult> Login(LoginViewModel vm, string? returnUrl = null)
     {
         if (!ModelState.IsValid) return View(vm);
-        var (success, token, error) = await _api.LoginAsync(vm.Email, vm.Password);
+
+        var (success, token, fullName, email, roles, error) = await _api.LoginAsync(vm.Email, vm.Password);
         if (!success) { ModelState.AddModelError("", error ?? "Giriş başarısız."); return View(vm); }
-        HttpContext.Session.SetString("JwtToken", token!);
+
+        // Cookie Authentication için claim listesi oluştur (token da claim olarak saklanıyor)
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, fullName ?? email!),
+            new Claim(ClaimTypes.Email, email!),
+            new Claim("JwtToken", token!),
+        };
+        foreach (var role in roles)
+            claims.Add(new Claim(ClaimTypes.Role, role));
+
+        var identity = new ClaimsIdentity(claims, "PosAuthCookie");
+        var principal = new ClaimsPrincipal(identity);
+        await HttpContext.SignInAsync("PosAuthCookie", principal);
+
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            return Redirect(returnUrl);
+
         return RedirectToAction("Index", "Home");
     }
 
@@ -35,10 +61,12 @@ public class AccountController : Controller
         return RedirectToAction(nameof(Login));
     }
 
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout()
     {
-        HttpContext.Session.Remove("JwtToken");
+        await HttpContext.SignOutAsync("PosAuthCookie");
         return RedirectToAction(nameof(Login));
     }
+
+    public IActionResult AccessDenied() => View();
 }
 

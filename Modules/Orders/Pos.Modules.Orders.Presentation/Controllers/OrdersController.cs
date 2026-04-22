@@ -32,7 +32,7 @@ public class OrdersController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateOrderDto dto)
     {
-        var result = await _mediator.Send(new CreateOrderCommand(dto.CustomerId, dto.Notes, dto.Items));
+        var result = await _mediator.Send(new CreateOrderCommand(dto.CustomerId, dto.Notes, dto.Items, dto.TableId));
         return result.IsSuccess ? CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value) : BadRequest(result.Error);
     }
 

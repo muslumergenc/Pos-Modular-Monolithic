@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -8,6 +9,8 @@ using Pos.Modules.Customers.Infrastructure.Extensions;
 using Pos.Modules.Identity.Infrastructure.Extensions;
 using Pos.Modules.Orders.Infrastructure.Extensions;
 using Pos.Modules.Payments.Infrastructure.Extensions;
+using Pos.Modules.Tables.Infrastructure.Extensions;
+using Pos.Modules.Identity.Domain.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
@@ -18,6 +21,7 @@ builder.Services.AddCatalogModule(config);
 builder.Services.AddCustomersModule(config);
 builder.Services.AddOrdersModule(config);
 builder.Services.AddPaymentsModule(config);
+builder.Services.AddTablesModule(config);
 
 // ── Controllers (tüm modüllerin Presentation assembly'lerinden) ──
 builder.Services.AddControllers()
@@ -25,7 +29,8 @@ builder.Services.AddControllers()
     .AddApplicationPart(typeof(Pos.Modules.Catalog.Presentation.Controllers.ProductsController).Assembly)
     .AddApplicationPart(typeof(Pos.Modules.Customers.Presentation.Controllers.CustomersController).Assembly)
     .AddApplicationPart(typeof(Pos.Modules.Orders.Presentation.Controllers.OrdersController).Assembly)
-    .AddApplicationPart(typeof(Pos.Modules.Payments.Presentation.Controllers.PaymentsController).Assembly);
+    .AddApplicationPart(typeof(Pos.Modules.Payments.Presentation.Controllers.PaymentsController).Assembly)
+    .AddApplicationPart(typeof(Pos.Modules.Tables.Presentation.Controllers.TablesController).Assembly);
 
 // ── JWT Authentication ──────────────────────────────────────
 var jwtSettings = config.GetSection("JwtSettings");
@@ -86,6 +91,20 @@ using (var scope = app.Services.CreateScope())
     await services.GetRequiredService<Pos.Modules.Customers.Infrastructure.Persistence.CustomersDbContext>().Database.MigrateAsync();
     await services.GetRequiredService<Pos.Modules.Orders.Infrastructure.Persistence.OrdersDbContext>().Database.MigrateAsync();
     await services.GetRequiredService<Pos.Modules.Payments.Infrastructure.Persistence.PaymentsDbContext>().Database.MigrateAsync();
+    await services.GetRequiredService<Pos.Modules.Tables.Infrastructure.Persistence.TablesDbContext>().Database.MigrateAsync();
+
+    // ── Rol & Admin Seed ─────────────────────────────────────
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+    var userManager = services.GetRequiredService<UserManager<AppUser>>();
+
+    foreach (var role in new[] { "Admin", "Waiter", "Cashier", "User" })
+        if (!await roleManager.RoleExistsAsync(role))
+            await roleManager.CreateAsync(new IdentityRole<Guid>(role));
+
+    // admin@pos.com kullanıcısına Admin rolü ata
+    var adminUser = await userManager.FindByEmailAsync("admin@pos.com");
+    if (adminUser is not null && !await userManager.IsInRoleAsync(adminUser, "Admin"))
+        await userManager.AddToRoleAsync(adminUser, "Admin");
 }
 
 // ── Middleware Pipeline ──────────────────────────────────────

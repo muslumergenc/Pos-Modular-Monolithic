@@ -23,7 +23,8 @@ public class ApiClient
 
     private void SetAuthHeader()
     {
-        var token = _httpContextAccessor.HttpContext?.Session.GetString("JwtToken");
+        // Token'ı Cookie claim'inden oku (Session yerine - daha güvenilir)
+        var token = _httpContextAccessor.HttpContext?.User?.FindFirst("JwtToken")?.Value;
         if (!string.IsNullOrEmpty(token))
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
@@ -56,14 +57,20 @@ public class ApiClient
     }
 
     // ── Auth ─────────────────────────────────────────────────
-    public async Task<(bool Success, string? Token, string? Error)> LoginAsync(string email, string password)
+    public async Task<(bool Success, string? Token, string? FullName, string? Email, IList<string> Roles, string? Error)> LoginAsync(string email, string password)
     {
         var content = new StringContent(JsonSerializer.Serialize(new { email, password }), Encoding.UTF8, "application/json");
         var response = await _httpClient.PostAsync("/api/auth/login", content);
         var json = await response.Content.ReadAsStringAsync();
-        if (!response.IsSuccessStatusCode) return (false, null, json);
+        if (!response.IsSuccessStatusCode) return (false, null, null, null, Array.Empty<string>(), json);
         var data = JsonSerializer.Deserialize<JsonElement>(json, _jsonOptions);
-        return (true, data.GetProperty("token").GetString(), null);
+        var token = data.GetProperty("token").GetString();
+        var fullName = data.TryGetProperty("fullName", out var fn) ? fn.GetString() : null;
+        var emailVal = data.TryGetProperty("email", out var em) ? em.GetString() : null;
+        var roles = data.TryGetProperty("roles", out var r)
+            ? r.EnumerateArray().Select(x => x.GetString()!).ToList()
+            : new List<string>();
+        return (true, token, fullName, emailVal, roles, null);
     }
 
     public async Task<(bool Success, string? Error)> RegisterAsync(RegisterViewModel vm)
@@ -129,6 +136,7 @@ public class ApiClient
         {
             customerId = vm.CustomerId,
             notes = vm.Notes,
+            tableId = vm.TableId,
             items = vm.Items.Select(i => new { productId = i.ProductId, quantity = i.Quantity })
         });
         return (success, data, error);
@@ -162,6 +170,47 @@ public class ApiClient
     {
         SetAuthHeader();
         var response = await _httpClient.PostAsync($"/api/payments/{paymentId}/refund", null);
+        return (response.IsSuccessStatusCode, response.IsSuccessStatusCode ? null : await response.Content.ReadAsStringAsync());
+    }
+
+    // ── Tables ───────────────────────────────────────────────
+    public Task<List<TableViewModel>?> GetTablesAsync() =>
+        GetAsync<List<TableViewModel>>("/api/tables");
+
+    public Task<TableViewModel?> GetTableAsync(Guid id) =>
+        GetAsync<TableViewModel>($"/api/tables/{id}");
+
+    public async Task<(bool Success, string? Error)> CreateTableAsync(CreateTableViewModel vm)
+    {
+        var (success, _, error) = await PostAsync<object>("/api/tables", new
+        {
+            number = vm.Number, capacity = vm.Capacity, label = vm.Label
+        });
+        return (success, error);
+    }
+
+    public async Task<(bool Success, string? Error)> UpdateTableStatusAsync(Guid id, int status)
+    {
+        SetAuthHeader();
+        var content = new StringContent(
+            System.Text.Json.JsonSerializer.Serialize(new { status }),
+            System.Text.Encoding.UTF8, "application/json");
+        var response = await _httpClient.PatchAsync($"/api/tables/{id}/status", content);
+        return (response.IsSuccessStatusCode, response.IsSuccessStatusCode ? null : await response.Content.ReadAsStringAsync());
+    }
+
+    public async Task<(bool Success, string? Error)> DeleteTableAsync(Guid id)
+    {
+        return await DeleteAsync($"/api/tables/{id}");
+    }
+
+    public async Task<(bool Success, string? Error)> UpdateOrderStatusAsync(Guid id, int status)
+    {
+        SetAuthHeader();
+        var content = new StringContent(
+            System.Text.Json.JsonSerializer.Serialize(new { status }),
+            System.Text.Encoding.UTF8, "application/json");
+        var response = await _httpClient.PatchAsync($"/api/orders/{id}/status", content);
         return (response.IsSuccessStatusCode, response.IsSuccessStatusCode ? null : await response.Content.ReadAsStringAsync());
     }
 

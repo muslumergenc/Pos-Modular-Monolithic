@@ -19,6 +19,8 @@ public class OrdersDbContext : DbContext
             b.HasKey(x => x.Id);
             b.Property(x => x.CustomerName).IsRequired().HasMaxLength(150);
             b.Property(x => x.TotalAmount).HasPrecision(18, 2);
+            b.Property(x => x.TableId).IsRequired(false);
+            b.Property(x => x.TableNumber).IsRequired(false);
             b.HasMany(x => x.Items).WithOne().HasForeignKey(x => x.OrderId);
         });
 

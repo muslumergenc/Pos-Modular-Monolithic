@@ -1,0 +1,104 @@
+@model List<Pos.Web.Models.TableViewModel>
+@{
+    ViewData["Title"] = "Masa Planı";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-grid-3x3-gap-fill me-2"></i>Masa Planı</h2>
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Yeni Masa
+        </a>
+    }
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle me-1"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Özet Kartları -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-success text-center py-3">
+            <div class="card-body">
+                <i class="bi bi-check-circle-fill text-success fs-2"></i>
+                <h4 class="mt-2 text-success">@Model.Count(t => t.Status == 0)</h4>
+                <small class="text-muted">Boş Masa</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-danger text-center py-3">
+            <div class="card-body">
+                <i class="bi bi-x-circle-fill text-danger fs-2"></i>
+                <h4 class="mt-2 text-danger">@Model.Count(t => t.Status == 1)</h4>
+                <small class="text-muted">Dolu Masa</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-warning text-center py-3">
+            <div class="card-body">
+                <i class="bi bi-clock-fill text-warning fs-2"></i>
+                <h4 class="mt-2 text-warning">@Model.Count(t => t.Status == 2)</h4>
+                <small class="text-muted">Rezerve Masa</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Masa Grid -->
+<div class="row g-3">
+    @foreach (var table in Model.OrderBy(t => t.Number))
+    {
+        <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+            <div class="card h-100 shadow-sm border-@table.StatusBadge table-card" style="cursor:pointer;"
+                 onclick="window.location='@Url.Action("Details","Tables", new { id = table.Id })'">
+                <div class="card-body text-center py-3">
+                    <div class="mb-2">
+                        <i class="bi @table.StatusIcon text-@table.StatusBadge fs-2"></i>
+                    </div>
+                    <h5 class="fw-bold mb-1">Masa @table.Number</h5>
+                    @if (!string.IsNullOrEmpty(table.Label))
+                    {
+                        <small class="text-muted d-block">@table.Label</small>
+                    }
+                    <span class="badge bg-@table.StatusBadge mt-1">@table.StatusName</span>
+                    <div class="mt-2 text-muted small">
+                        <i class="bi bi-people me-1"></i>@table.Capacity kişilik
+                    </div>
+                </div>
+                @if (table.Status == 0)
+                {
+                    <div class="card-footer bg-transparent border-top-0 text-center pb-2">
+                        <a asp-action="NewOrder" asp-route-id="@table.Id"
+                           class="btn btn-sm btn-outline-success w-100"
+                           onclick="event.stopPropagation()">
+                            <i class="bi bi-plus-circle me-1"></i>Sipariş Al
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    @if (!Model.Any())
+    {
+        <div class="col-12 text-center py-5 text-muted">
+            <i class="bi bi-grid-3x3-gap fs-1 d-block mb-2"></i>
+            Henüz masa eklenmemiş.
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-action="Create" class="btn btn-outline-primary mt-2">Masa Ekle</a>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .table-card:hover { transform: translateY(-3px); transition: transform .2s; }
+</style>
